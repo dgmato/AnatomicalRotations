@@ -347,7 +347,7 @@ plot (timeStamp, newmeanMinPeaks_roll, 'b')
 
 %% FFT rigidbody yaw, pitch, and roll
 
-fft_trackable_yaw=fft(trackable_yaw,200);
+fft_trackable_yaw=fft(trackable_yaw);
 figure(4)
 stem(fft_trackable_yaw)
 
