@@ -345,13 +345,11 @@ plot (timeStamp, newmeanMaxPeaks_roll, 'r')
 hold on
 plot (timeStamp, newmeanMinPeaks_roll, 'b')
 
-%% FFT rigidbody yaw, pitch, and roll
+%% Computation of signal period
 
-fft_trackable_yaw=fft(trackable_yaw,200);
-figure(4)
-stem(fft_trackable_yaw)
-
-
+periodYaw = computePeriodOfSignal(trackable_yaw, timeStamp)
+periodPitch = computePeriodOfSignal(trackable_pitch, timeStamp)
+periodRoll = computePeriodOfSignal(trackable_roll, timeStamp)
 
 
 end

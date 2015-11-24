@@ -1,0 +1,13 @@
+function [periodOfTheSignal] = computePeriodOfSignal(signal, timeStamp)
+% 
+    
+    % Find time step in timeStamp
+    step=zeros(length(timeStamp)-1,1);
+    for i=1:length(timeStamp)-1
+        step(i)=timeStamp(i+1)-timeStamp(i);
+    end
+    stepSize=mean(step);
+    autocorrelation=xcorr(signal,signal);
+    [~,locs]=findpeaks(autocorrelation);
+    periodOfTheSignal=mean(diff(locs)*stepSize);
+end
