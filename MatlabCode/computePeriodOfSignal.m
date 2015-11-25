@@ -1,4 +1,4 @@
-function [periodOfTheSignal] = computePeriodOfSignal(signal, timeStamp)
+function [periodOfTheSignalSeconds,periodOfTheSignalSamples] = computePeriodOfSignal(signal, timeStamp)
 % This function computes the period of a given signal ("signal") sampled in
 % time according to the array "timeStamp" (in seconds). The period is
 % computed by analysing the autocorrelation function of the signal. The
@@ -16,5 +16,6 @@ function [periodOfTheSignal] = computePeriodOfSignal(signal, timeStamp)
     [~,locs]=findpeaks(autocorrelation);
     
     % Find period from peaks
-    periodOfTheSignal=mean(diff(locs)*stepSize);
+    periodOfTheSignalSeconds=mean(diff(locs)*stepSize);
+    periodOfTheSignalSamples=mean(diff(locs));
 end

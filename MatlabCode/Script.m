@@ -240,12 +240,24 @@ plot(timeStamp,trackable_roll,'color', plot_color,'LineWidth',2)
 xlabel('Time(seconds)')
 ylabel('trackable roll')
 
-% Find local maxima/minima in Euler's Orientation
+%% Find local maxima/minima in Euler's Orientation
+% Computation of signal period
+[periodYawSeconds,periodYawSamples] = computePeriodOfSignal(trackable_yaw, timeStamp);
+[periodPitchSeconds,periodPitchSamples] = computePeriodOfSignal(trackable_pitch, timeStamp);
+[periodRollSeconds,periodRollSamples] = computePeriodOfSignal(trackable_roll, timeStamp);
+
+% Local Maxima specifications: max and min thresholds
+thresholdMaxima_yaw=prctile(trackable_yaw,75);
+thresholdMaxima_pitch=prctile(trackable_pitch,75);
+thresholdMaxima_roll=prctile(trackable_roll,75);
+thresholdMinima_yaw=prctile(trackable_yaw,25);
+thresholdMinima_pitch=prctile(trackable_pitch,25);
+thresholdMinima_roll=prctile(trackable_roll,25);
 
 % Find local maxima
-[rigidbody_yaw_maxPeaks,rigidbody_yaw_maxPeaksLocs] = findpeaks(trackable_yaw);
-[rigidbody_pitch_maxPeaks,rigidbody_pitch_maxPeaksLocs] = findpeaks(trackable_pitch);
-[rigidbody_roll_maxPeaks,rigidbody_roll_maxPeaksLocs] = findpeaks(trackable_roll);
+[rigidbody_yaw_maxPeaks,rigidbody_yaw_maxPeaksLocs] = findpeaks(trackable_yaw,'MINPEAKHEIGHT',thresholdMaxima_yaw,'MINPEAKDISTANCE',round(periodYawSamples/2));
+[rigidbody_pitch_maxPeaks,rigidbody_pitch_maxPeaksLocs] = findpeaks(trackable_pitch,'MINPEAKHEIGHT',thresholdMaxima_pitch,'MINPEAKDISTANCE',round(periodPitchSamples/2));
+[rigidbody_roll_maxPeaks,rigidbody_roll_maxPeaksLocs] = findpeaks(trackable_roll,'MINPEAKHEIGHT',thresholdMaxima_roll,'MINPEAKDISTANCE',round(periodRollSamples/2));
 
 meanMaxPeaks_yaw = mean(rigidbody_yaw_maxPeaks);
 meanMaxPeaks_pitch = mean(rigidbody_pitch_maxPeaks);
@@ -255,9 +267,12 @@ meanMaxPeaks_roll = mean(rigidbody_roll_maxPeaks);
 rigidbody_yaw_inv = 1.01*max(trackable_yaw) - trackable_yaw;
 rigidbody_pitch_inv = 1.01*max(trackable_pitch) - trackable_pitch;
 rigidbody_roll_inv = 1.01*max(trackable_roll) - trackable_roll;
-[rigidbody_yaw_minPeaks,rigidbody_yaw_minPeaksLocs] = findpeaks(rigidbody_yaw_inv);
-[rigidbody_pitch_minPeaks,rigidbody_pitch_minPeaksLocs] = findpeaks(rigidbody_pitch_inv);
-[rigidbody_roll_minPeaks,rigidbody_roll_minPeaksLocs] = findpeaks(rigidbody_roll_inv);
+thresholdMinima_yaw = 1.01*max(trackable_yaw) - thresholdMinima_yaw;
+thresholdMinima_pitch = 1.01*max(trackable_pitch) - thresholdMinima_pitch;
+thresholdMinima_roll = 1.01*max(trackable_roll) - thresholdMinima_roll;
+[rigidbody_yaw_minPeaks,rigidbody_yaw_minPeaksLocs] = findpeaks(rigidbody_yaw_inv,'MINPEAKHEIGHT',thresholdMinima_yaw,'MINPEAKDISTANCE',round(periodYawSamples/2));
+[rigidbody_pitch_minPeaks,rigidbody_pitch_minPeaksLocs] = findpeaks(rigidbody_pitch_inv,'MINPEAKHEIGHT',thresholdMinima_pitch,'MINPEAKDISTANCE',round(periodPitchSamples/2));
+[rigidbody_roll_minPeaks,rigidbody_roll_minPeaksLocs] = findpeaks(rigidbody_roll_inv,'MINPEAKHEIGHT',thresholdMinima_roll,'MINPEAKDISTANCE',round(periodRollSamples/2));
 rigidbody_yaw_minPeaks=trackable_yaw(rigidbody_yaw_minPeaksLocs);
 rigidbody_pitch_minPeaks=trackable_pitch(rigidbody_pitch_minPeaksLocs);
 rigidbody_roll_minPeaks=trackable_roll(rigidbody_roll_minPeaksLocs);
@@ -266,91 +281,58 @@ meanMinPeaks_yaw = mean(rigidbody_yaw_minPeaks);
 meanMinPeaks_pitch = mean(rigidbody_pitch_minPeaks);
 meanMinPeaks_roll = mean(rigidbody_roll_minPeaks);
 
+% Standard deviation computation
+std_maxYaw = std(rigidbody_yaw_maxPeaks);
+std_maxPitch = std(rigidbody_pitch_maxPeaks);
+std_maxRoll = std(rigidbody_roll_maxPeaks);
 
-% Recomputation of maxPeaks and minPeaks to eliminate wrong local maxima/minima
-
-thresholdMaxima_yaw=prctile(trackable_yaw,75);
-thresholdMaxima_pitch=prctile(trackable_pitch,75);
-thresholdMaxima_roll=prctile(trackable_roll,75);
-thresholdMinima_yaw=prctile(trackable_yaw,25);
-thresholdMinima_pitch=prctile(trackable_pitch,25);
-thresholdMinima_roll=prctile(trackable_roll,25);
-
-[newrigidbody_yaw_maxPeaks,newrigidbody_yaw_maxPeaksLocs] = calculateNewArrayAndLocations( rigidbody_yaw_maxPeaks,rigidbody_yaw_maxPeaksLocs, 0, thresholdMaxima_yaw);
-[newrigidbody_pitch_maxPeaks,newrigidbody_pitch_maxPeaksLocs] = calculateNewArrayAndLocations( rigidbody_pitch_maxPeaks,rigidbody_pitch_maxPeaksLocs, 0, thresholdMaxima_pitch);
-[newrigidbody_roll_maxPeaks,newrigidbody_roll_maxPeaksLocs] = calculateNewArrayAndLocations( rigidbody_roll_maxPeaks,rigidbody_roll_maxPeaksLocs, 0, thresholdMaxima_roll);
-
-newmeanMaxPeaks_yaw = mean(newrigidbody_yaw_maxPeaks);
-newmeanMaxPeaks_pitch = mean(newrigidbody_pitch_maxPeaks);
-newmeanMaxPeaks_roll = mean(newrigidbody_roll_maxPeaks);
-
-std_maxYaw = std(newrigidbody_yaw_maxPeaks)
-std_maxPitch = std(newrigidbody_pitch_maxPeaks);
-std_maxRoll = std(newrigidbody_roll_maxPeaks);
-
-[newrigidbody_yaw_minPeaks,newrigidbody_yaw_minPeaksLocs] = calculateNewArrayAndLocations( rigidbody_yaw_minPeaks,rigidbody_yaw_minPeaksLocs, 1, thresholdMinima_yaw);
-[newrigidbody_pitch_minPeaks,newrigidbody_pitch_minPeaksLocs] = calculateNewArrayAndLocations( rigidbody_pitch_minPeaks,rigidbody_pitch_minPeaksLocs, 1, thresholdMinima_pitch);
-[newrigidbody_roll_minPeaks,newrigidbody_roll_minPeaksLocs] = calculateNewArrayAndLocations( rigidbody_roll_minPeaks,rigidbody_roll_minPeaksLocs, 1, thresholdMinima_roll);
-
-newmeanMinPeaks_yaw = mean(newrigidbody_yaw_minPeaks);
-newmeanMinPeaks_pitch = mean(newrigidbody_pitch_minPeaks);
-newmeanMinPeaks_roll = mean(newrigidbody_roll_minPeaks);
-
-std_minYaw = std(newrigidbody_yaw_minPeaks)
-std_minPitch = std(newrigidbody_pitch_minPeaks);
-std_minRoll = std(newrigidbody_roll_minPeaks);
+std_minYaw = std(rigidbody_yaw_minPeaks);
+std_minPitch = std(rigidbody_pitch_minPeaks);
+std_minRoll = std(rigidbody_roll_minPeaks);
 
 % Plots of maxima and minima peaks in position
 figure(3)
-
 subplot(3,1,1)
-for i=1:length(newrigidbody_yaw_maxPeaksLocs)
+for i=1:length(rigidbody_yaw_maxPeaksLocs)
     hold on
-    plot(timeStamp(newrigidbody_yaw_maxPeaksLocs(i)),newrigidbody_yaw_maxPeaks(i),'go')
+    plot(timeStamp(rigidbody_yaw_maxPeaksLocs(i)),rigidbody_yaw_maxPeaks(i),'go')
 end
-for i=1:length(newrigidbody_yaw_minPeaksLocs)
+for i=1:length(rigidbody_yaw_minPeaksLocs)
     hold on
-    plot(timeStamp(newrigidbody_yaw_minPeaksLocs(i)),newrigidbody_yaw_minPeaks(i),'b*')
+    plot(timeStamp(rigidbody_yaw_minPeaksLocs(i)),rigidbody_yaw_minPeaks(i),'b*')
 end
 hold on
-plot (timeStamp, newmeanMaxPeaks_yaw, 'r')
+plot (timeStamp, meanMaxPeaks_yaw, 'r')
 hold on
-plot (timeStamp, newmeanMinPeaks_yaw, 'b')
+plot (timeStamp, meanMinPeaks_yaw, 'b')
 
 subplot(3,1,2)
-for j=1:length(newrigidbody_pitch_maxPeaksLocs)
+for j=1:length(rigidbody_pitch_maxPeaksLocs)
     hold on
-    plot(timeStamp(newrigidbody_pitch_maxPeaksLocs(j)),newrigidbody_pitch_maxPeaks(j),'go')
+    plot(timeStamp(rigidbody_pitch_maxPeaksLocs(j)),rigidbody_pitch_maxPeaks(j),'go')
 end
-for j=1:length(newrigidbody_pitch_minPeaksLocs)
+for j=1:length(rigidbody_pitch_minPeaksLocs)
     hold on
-    plot(timeStamp(newrigidbody_pitch_minPeaksLocs(j)),newrigidbody_pitch_minPeaks(j),'b*')
+    plot(timeStamp(rigidbody_pitch_minPeaksLocs(j)),rigidbody_pitch_minPeaks(j),'b*')
 end
 hold on
-plot (timeStamp, newmeanMaxPeaks_pitch,'r')
+plot (timeStamp, meanMaxPeaks_pitch,'r')
 hold on
-plot (timeStamp, newmeanMinPeaks_pitch, 'b')
+plot (timeStamp, meanMinPeaks_pitch, 'b')
 
 subplot(3,1,3)
-for k=1:length(newrigidbody_roll_maxPeaksLocs)
+for k=1:length(rigidbody_roll_maxPeaksLocs)
     hold on
-    plot(timeStamp(newrigidbody_roll_maxPeaksLocs(k)),newrigidbody_roll_maxPeaks(k),'go')
+    plot(timeStamp(rigidbody_roll_maxPeaksLocs(k)),rigidbody_roll_maxPeaks(k),'go')
 end
-for k=1:length(newrigidbody_roll_minPeaksLocs)
+for k=1:length(rigidbody_roll_minPeaksLocs)
     hold on
-    plot(timeStamp(newrigidbody_roll_minPeaksLocs(k)),newrigidbody_roll_minPeaks(k),'b*')
+    plot(timeStamp(rigidbody_roll_minPeaksLocs(k)),rigidbody_roll_minPeaks(k),'b*')
 end
 hold on
-plot (timeStamp, newmeanMaxPeaks_roll, 'r')
+plot (timeStamp, meanMaxPeaks_roll, 'r')
 hold on
-plot (timeStamp, newmeanMinPeaks_roll, 'b')
-
-%% Computation of signal period
-
-periodYaw = computePeriodOfSignal(trackable_yaw, timeStamp)
-periodPitch = computePeriodOfSignal(trackable_pitch, timeStamp)
-periodRoll = computePeriodOfSignal(trackable_roll, timeStamp)
-
+plot (timeStamp, meanMinPeaks_roll, 'b')
 
 end
 end
