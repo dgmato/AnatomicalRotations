@@ -1,8 +1,9 @@
+
+close all
 clear
 clc
-close all
-
 typeOfMovement=1;
+numExp=0;
 while typeOfMovement~=0
 %% File to read selection
 typeOfMovementSelection = 'What type of movement would you like to analyze?:\n      (1) Mov No or (2) Mov Pichi or (0) To finish application \n';
@@ -124,20 +125,20 @@ rigidbody_z=trackable_z;
 figure(1)
 subplot(3,1,1)
 hold on
-plot(timeStamp,rigidbody_x,'color', plot_color,'LineWidth',2)
+plot(timeStamp,rigidbody_x,'color', plot_color,'LineWidth',4)
 title('Movement of rigid body')
 xlabel('Time(seconds)')
-ylabel('Displacement in X (mm)')
+ylabel('Displacement in X (m)')
 subplot(3,1,2)
 hold on
-plot(timeStamp,rigidbody_y,'color', plot_color,'LineWidth',2)
+plot(timeStamp,rigidbody_y,'color', plot_color,'LineWidth',4)
 xlabel('Time(seconds)')
-ylabel('Displacement in Y (mm)')
+ylabel('Displacement in Y (m)')
 subplot(3,1,3)
 hold on
-plot(timeStamp,rigidbody_z,'color', plot_color,'LineWidth',2)
+plot(timeStamp,rigidbody_z,'color', plot_color,'LineWidth',4)
 xlabel('Time(seconds)')
-ylabel('Displacement in Z (mm)')
+ylabel('Displacement in Z (m)')
 
 %% Find local maxima/minima in position
 
@@ -196,28 +197,39 @@ rigidbody_z_minPeaks=rigidbody_z(rigidbody_z_minPeaksLocs);
 % ylabel('Displacement in Z (mm)')
 
 %% Orientation 
+
+% Filtering
+filtWin=20;
+trackable_qx=smooth(trackable_qx,filtWin);
+trackable_qy=smooth(trackable_qy,filtWin);
+trackable_qz=smooth(trackable_qz,filtWin);
+trackable_qw=smooth(trackable_qw,filtWin);
+trackable_yaw=smooth(trackable_yaw,filtWin);
+trackable_pitch=smooth(trackable_pitch,filtWin);
+trackable_roll=smooth(trackable_roll,filtWin);
+
 figure(2)
 subplot(4,1,1)
 hold on
-plot(timeStamp,trackable_qx,'color', plot_color,'LineWidth',2)
+plot(timeStamp,trackable_qx,'color', plot_color,'LineWidth',4)
 title('Quaternions of rigid body')
 xlabel('Time(seconds)')
 ylabel('Quaternion X')
 subplot(4,1,2)
 hold on
-plot(timeStamp,trackable_qy,'color', plot_color,'LineWidth',2)
+plot(timeStamp,trackable_qy,'color', plot_color,'LineWidth',4)
 xlabel('Time(seconds)')
 ylabel('Quaternion Y')
 subplot(4,1,3)
 hold on
-plot(timeStamp,trackable_qz,'color', plot_color,'LineWidth',2)
+plot(timeStamp,trackable_qz,'color', plot_color,'LineWidth',4)
 xlabel('Time(seconds)')
 ylabel('Quaternion Z')
 subplot(4,1,4)
 angle = 2 * acos(trackable_qw);
 angle=radtodeg(angle);
 hold on
-plot(timeStamp,angle,'color', plot_color,'LineWidth',2)
+plot(timeStamp,angle,'color', plot_color,'LineWidth',4)
 xlabel('Time(seconds)')
 ylabel('Degrees')
 
@@ -225,18 +237,18 @@ ylabel('Degrees')
 figure(3)
 subplot(3,1,1)
 hold on
-plot(timeStamp,trackable_yaw,'color', plot_color,'LineWidth',2)
+plot(timeStamp,trackable_yaw,'color', plot_color,'LineWidth',3)
 title('YAW, PITCH, AND ROLL')
 xlabel('Time(seconds)')
 ylabel('trackable yaw')
 subplot(3,1,2)
 hold on
-plot(timeStamp,trackable_pitch,'color', plot_color,'LineWidth',2)
+plot(timeStamp,trackable_pitch,'color', plot_color,'LineWidth',3)
 xlabel('Time(seconds)')
 ylabel('trackable pitch')
 subplot(3,1,3)
 hold on
-plot(timeStamp,trackable_roll,'color', plot_color,'LineWidth',2)
+plot(timeStamp,trackable_roll,'color', plot_color,'LineWidth',3)
 xlabel('Time(seconds)')
 ylabel('trackable roll')
 
@@ -282,60 +294,82 @@ meanMinPeaks_pitch = mean(rigidbody_pitch_minPeaks);
 meanMinPeaks_roll = mean(rigidbody_roll_minPeaks);
 
 % Standard deviation computation
-std_maxYaw = std(rigidbody_yaw_maxPeaks);
-std_maxPitch = std(rigidbody_pitch_maxPeaks);
-std_maxRoll = std(rigidbody_roll_maxPeaks);
+numExp=numExp+1;
+std_maxYaw(numExp) = std(rigidbody_yaw_maxPeaks);
+std_maxPitch(numExp) = std(rigidbody_pitch_maxPeaks);
+std_maxRoll(numExp) = std(rigidbody_roll_maxPeaks);
 
-std_minYaw = std(rigidbody_yaw_minPeaks);
-std_minPitch = std(rigidbody_pitch_minPeaks);
-std_minRoll = std(rigidbody_roll_minPeaks);
+std_minYaw(numExp) = std(rigidbody_yaw_minPeaks);
+std_minPitch(numExp)= std(rigidbody_pitch_minPeaks);
+std_minRoll(numExp) = std(rigidbody_roll_minPeaks);
 
 % Plots of maxima and minima peaks in position
 figure(3)
 subplot(3,1,1)
 for i=1:length(rigidbody_yaw_maxPeaksLocs)
     hold on
-    plot(timeStamp(rigidbody_yaw_maxPeaksLocs(i)),rigidbody_yaw_maxPeaks(i),'go')
+    plot(timeStamp(rigidbody_yaw_maxPeaksLocs(i)),rigidbody_yaw_maxPeaks(i),'k*')
 end
 for i=1:length(rigidbody_yaw_minPeaksLocs)
     hold on
-    plot(timeStamp(rigidbody_yaw_minPeaksLocs(i)),rigidbody_yaw_minPeaks(i),'b*')
+    plot(timeStamp(rigidbody_yaw_minPeaksLocs(i)),rigidbody_yaw_minPeaks(i),'k*')
 end
-hold on
-plot (timeStamp, meanMaxPeaks_yaw, 'r')
-hold on
-plot (timeStamp, meanMinPeaks_yaw, 'b')
+% hold on
+% plot (timeStamp, meanMaxPeaks_yaw, 'r')
+% hold on
+% plot (timeStamp, meanMinPeaks_yaw, 'b')
 
 subplot(3,1,2)
 for j=1:length(rigidbody_pitch_maxPeaksLocs)
     hold on
-    plot(timeStamp(rigidbody_pitch_maxPeaksLocs(j)),rigidbody_pitch_maxPeaks(j),'go')
+    plot(timeStamp(rigidbody_pitch_maxPeaksLocs(j)),rigidbody_pitch_maxPeaks(j),'k*')
 end
 for j=1:length(rigidbody_pitch_minPeaksLocs)
     hold on
-    plot(timeStamp(rigidbody_pitch_minPeaksLocs(j)),rigidbody_pitch_minPeaks(j),'b*')
+    plot(timeStamp(rigidbody_pitch_minPeaksLocs(j)),rigidbody_pitch_minPeaks(j),'k*')
 end
-hold on
-plot (timeStamp, meanMaxPeaks_pitch,'r')
-hold on
-plot (timeStamp, meanMinPeaks_pitch, 'b')
+% hold on
+% plot (timeStamp, meanMaxPeaks_pitch,'r')
+% hold on
+% plot (timeStamp, meanMinPeaks_pitch, 'b')
 
 subplot(3,1,3)
 for k=1:length(rigidbody_roll_maxPeaksLocs)
     hold on
-    plot(timeStamp(rigidbody_roll_maxPeaksLocs(k)),rigidbody_roll_maxPeaks(k),'go')
+    plot(timeStamp(rigidbody_roll_maxPeaksLocs(k)),rigidbody_roll_maxPeaks(k),'k*')
 end
 for k=1:length(rigidbody_roll_minPeaksLocs)
     hold on
-    plot(timeStamp(rigidbody_roll_minPeaksLocs(k)),rigidbody_roll_minPeaks(k),'b*')
+    plot(timeStamp(rigidbody_roll_minPeaksLocs(k)),rigidbody_roll_minPeaks(k),'k*')
 end
-hold on
-plot (timeStamp, meanMaxPeaks_roll, 'r')
-hold on
-plot (timeStamp, meanMinPeaks_roll, 'b')
+% hold on
+% plot (timeStamp, meanMaxPeaks_roll, 'r')
+% hold on
+% plot (timeStamp, meanMinPeaks_roll, 'b')
 
 end
 end
+
+figure;
+subplot(3,1,1)
+plot(1:numExp,std_maxYaw,'ro-')
+xlabel('Experiment')
+ylabel('Std of yaw max peaks')
+hold on
+plot(1:numExp,std_minYaw,'bo-')
+subplot(3,1,2)
+plot(1:numExp,std_maxPitch,'ro-')
+xlabel('Experiment')
+ylabel('Std of pitch max peaks')
+hold on
+plot(1:numExp,std_minPitch,'bo-')
+subplot(3,1,3)
+plot(1:numExp,std_maxRoll,'ro-')
+xlabel('Experiment')
+ylabel('Std of roll max peaks')
+hold on
+plot(1:numExp,std_minRoll,'bo-')
+
 disp('Thanks for using this awesome program!')
 
 
